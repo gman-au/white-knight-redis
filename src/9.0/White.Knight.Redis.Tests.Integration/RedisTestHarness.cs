@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text.Json;
 using System.Threading.Tasks;
+using NRedisStack.RedisStackCommands;
+using StackExchange.Redis;
 using Testcontainers.Redis;
 using White.Knight.Tests.Abstractions;
 using White.Knight.Tests.Abstractions.Data;
@@ -25,7 +27,8 @@ namespace White.Knight.Redis.Tests.Integration
             {
                 var redisContainer =
                     new RedisBuilder()
-                        .WithImage("redis:7.0")
+                        .WithImage("redis/redis-stack:latest")
+                        .WithName("redis-test-harness")
                         .WithPortBinding(6379, 6379)
                         .Build();
 
@@ -67,10 +70,14 @@ namespace White.Knight.Redis.Tests.Integration
 
             foreach (var record in records)
             {
-                var keyValue =
+                var key =
                     keyExpr
                         .Compile()
                         .Invoke(record);
+
+                var redisKey =
+                    $"{typeof(T).Name}:{key}"
+                        .ToLowerInvariant();
 
                 var value =
                     JsonSerializer
@@ -78,9 +85,11 @@ namespace White.Knight.Redis.Tests.Integration
 
                 await
                     cache
-                        .StringSetAsync(
-                            keyValue.ToString(),
-                            value
+                        .JSON()
+                        .SetAsync(
+                            new RedisKey(redisKey),
+                            new RedisValue("$"),
+                            new RedisValue(value)
                         );
             }
         }

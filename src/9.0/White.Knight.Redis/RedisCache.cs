@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
 using White.Knight.Redis.Options;
 
@@ -37,7 +38,8 @@ namespace White.Knight.Redis
             var result =
                 await
                     cache
-                        .StringGetAsync(key.ToString());
+                        .JSON()
+                        .GetAsync(key.ToString());
 
             if (result.IsNull)
                 return default;
@@ -71,12 +73,14 @@ namespace White.Knight.Redis
 
             await
                 cache
-                    .StringSetAsync(
-                        key.ToString(),
-                        cacheValue
+                    .JSON()
+                    .SetAsync(
+                        new RedisKey(key.ToString()),
+                        new RedisValue("$"),
+                        new RedisValue(cacheValue)
                     );
 
-            // TODO: caching expiry can be a redis config option
+            // TODO: caching expiry can / should be a redis config option
         }
 
         public async Task<bool> RemoveAsync(object key, CancellationToken cancellationToken)

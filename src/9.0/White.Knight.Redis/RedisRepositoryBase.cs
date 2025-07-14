@@ -39,10 +39,14 @@ namespace White.Knight.Redis
         {
             var key = command.Key;
 
+            var redisKey =
+                $"{typeof(TD).Name}:{key}"
+                    .ToLowerInvariant();
+
             try
             {
                 Logger
-                    .LogDebug("Retrieving single record with key [{key}]", key);
+                    .LogDebug("Retrieving single record with key [{redisKey}]", redisKey);
 
                 Stopwatch
                     .Restart();
@@ -50,10 +54,10 @@ namespace White.Knight.Redis
                 var redisEntity =
                     await
                         _redisCache
-                            .GetAsync(key, cancellationToken);
+                            .GetAsync(redisKey, cancellationToken);
 
                 Logger
-                    .LogDebug("Retrieved single record with key [{key}] in {ms} ms", key,
+                    .LogDebug("Retrieved single record with key [{redisKey}] in {ms} ms", redisKey,
                         Stopwatch.ElapsedMilliseconds);
 
                 return redisEntity;
@@ -61,7 +65,7 @@ namespace White.Knight.Redis
             catch (Exception e)
             {
                 Logger
-                    .LogError("Retrieving single record with key [{key}]: {error}", key, e.Message);
+                    .LogError("Retrieving single record with key [{redisKey}]: {error}", redisKey, e.Message);
 
                 throw RethrowRepositoryException(e);
             }
@@ -90,27 +94,31 @@ namespace White.Knight.Redis
         {
             var key = command.Key;
 
+            var redisKey =
+                $"{typeof(TD).Name}:{key}"
+                    .ToLowerInvariant();
+
             try
             {
                 Logger
-                    .LogDebug("Deleting record with key [{key}]", key);
+                    .LogDebug("Deleting record with key [{redisKey}]", redisKey);
 
                 Stopwatch
                     .Restart();
 
                 await
                     _redisCache
-                        .RemoveAsync(key, cancellationToken);
+                        .RemoveAsync(redisKey, cancellationToken);
 
                 Logger
-                    .LogDebug("Deleted record with key [{key}] in {ms} ms", key, Stopwatch.ElapsedMilliseconds);
+                    .LogDebug("Deleted record with key [{redisKey}] in {ms} ms", redisKey, Stopwatch.ElapsedMilliseconds);
 
                 return key;
             }
             catch (Exception e)
             {
                 Logger
-                    .LogError("Error deleting record key [{key}]: {error}", key, e.Message);
+                    .LogError("Error deleting record key [{redisKey}]: {error}", redisKey, e.Message);
 
                 throw RethrowRepositoryException(e);
             }
@@ -129,12 +137,10 @@ namespace White.Knight.Redis
         )
         {
             TD entityToCommit;
+            var redisKey = "undefined";
 
             try
             {
-                Logger
-                    .LogDebug("Upserting record of type [{type}]", typeof(TD).Name);
-
                 Stopwatch
                     .Restart();
 
@@ -143,10 +149,17 @@ namespace White.Knight.Redis
                         .Compile()
                         .Invoke(sourceEntity);
 
+                redisKey =
+                    $"{typeof(TD).Name}:{key}"
+                        .ToLowerInvariant();
+
+                Logger
+                    .LogDebug("Upserting record of type [{type}] with key [{redisKey}]", typeof(TD).Name, redisKey);
+
                 var targetEntity =
                     await
                         _redisCache
-                            .GetAsync(key, cancellationToken);
+                            .GetAsync(redisKey, cancellationToken);
 
                 entityToCommit =
                     sourceEntity
@@ -157,16 +170,16 @@ namespace White.Knight.Redis
 
                 await
                     _redisCache
-                        .SetAsync(key, entityToCommit, cancellationToken);
+                        .SetAsync(redisKey, entityToCommit, cancellationToken);
 
                 Logger
-                    .LogDebug("Upserted record of type [{type}] in {ms} ms", typeof(TD).Name,
+                    .LogDebug("Upserted record of type [{type}] with key [{redisKey}] in {ms} ms", typeof(TD).Name, redisKey,
                         Stopwatch.ElapsedMilliseconds);
             }
             catch (Exception e)
             {
                 Logger
-                    .LogError("Error upserting record of type [{type}]: {error}", typeof(TD).Name, e.Message);
+                    .LogError("Error upserting record of type [{type}] with key [{redisKey}]: {error}", typeof(TD).Name, redisKey, e.Message);
 
                 throw RethrowRepositoryException(e);
             }
