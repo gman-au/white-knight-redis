@@ -13,6 +13,7 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.6" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.6"/>
+        <PackageReference Include="Testcontainers.Redis" Version="4.6.0" />
         <PackageReference Include="White.Knight.Tests.Abstractions" Version="9.0.5" />
         <PackageReference Include="xunit" Version="2.5.3"/>
         <PackageReference Include="Xunit.Extensions.Logging" Version="1.1.0" />
@@ -24,7 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\White.Knight.Csv\White.Knight.Csv.csproj" />
+      <ProjectReference Include="..\White.Knight.Redis\White.Knight.Redis.csproj" />
     </ItemGroup>
 
     <ItemGroup>

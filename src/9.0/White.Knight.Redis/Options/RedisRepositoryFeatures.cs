@@ -2,15 +2,15 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using White.Knight.Interfaces;
 
-namespace White.Knight.Csv.Options
+namespace White.Knight.Redis.Options
 {
-    public class CsvRepositoryFeatures<T>(
-        ICsvLoader<T> csvLoader,
+    public class RedisRepositoryFeatures<T>(
+        IRedisCache<T> redisCache,
         IRepositoryExceptionWrapper exceptionWrapper = null,
         ILoggerFactory loggerFactory = null)
-        : IRepositoryOptions<T>
+        : IRepositoryOptions<T> where T : new()
     {
-        public ICsvLoader<T> CsvLoader { get; set; } = csvLoader;
+        public IRedisCache<T> RedisCache { get; set; } = redisCache;
 
         public IRepositoryExceptionWrapper ExceptionWrapper { get; set; } = exceptionWrapper;
 

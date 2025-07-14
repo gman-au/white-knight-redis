@@ -1,15 +1,15 @@
 ﻿using System.Reflection;
-using White.Knight.Csv.Injection;
-using White.Knight.Csv.Tests.Integration.Repositories;
+using White.Knight.Redis.Injection;
+using White.Knight.Redis.Tests.Integration.Repositories;
 using White.Knight.Tests.Abstractions;
 using White.Knight.Tests.Abstractions.Extensions;
 using White.Knight.Tests.Abstractions.Repository;
 using White.Knight.Tests.Abstractions.Tests;
 using Xunit.Abstractions;
 
-namespace White.Knight.Csv.Tests.Integration
+namespace White.Knight.Redis.Tests.Integration
 {
-    public class CsvRepositoryTests(ITestOutputHelper helper)
+    public class RedisRepositoryTests(ITestOutputHelper helper)
         : AbstractedRepositoryTests(new CsvRepositoryTestContext(helper))
     {
         private static readonly Assembly RepositoryAssembly =
@@ -21,19 +21,19 @@ namespace White.Knight.Csv.Tests.Integration
             public CsvRepositoryTestContext(ITestOutputHelper testOutputHelper)
             {
                 // specify csv harness
-                LoadTestConfiguration<CsvTestHarness>();
+                LoadTestConfiguration<RedisTestHarness>();
 
                 // service initialisation
                 ServiceCollection
-                    .AddCsvRepositories(Configuration)
-                    .AddAttributedCsvRepositories(RepositoryAssembly);
+                    .AddRedisRepositories(Configuration)
+                    .AddAttributedRedisRepositories(RepositoryAssembly);
 
                 // redirect ILogger output to Xunit console
                 ServiceCollection
                     .ArrangeXunitOutputLogging(testOutputHelper);
 
                 ServiceCollection
-                    .AddCsvRepositoryOptions();
+                    .AddRedisRepositoryOptions();
 
                 LoadServiceProvider();
             }
