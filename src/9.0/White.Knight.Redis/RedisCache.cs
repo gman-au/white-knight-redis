@@ -1,18 +1,28 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 using White.Knight.Redis.Options;
 
 namespace White.Knight.Redis
 {
     public class RedisCache<TD>(
         IRedisMultiplexer redisMultiplexer,
-        IOptions<RedisRepositoryConfigurationOptions> optionsAccessor)
+        IOptions<RedisRepositoryConfigurationOptions> optionsAccessor,
+        ILoggerFactory loggerFactory = null)
         : IRedisCache<TD>
         where TD : new()
     {
+        private readonly ILogger<RedisMultiplexer> _logger =
+            (loggerFactory ?? NullLoggerFactory.Instance)
+            .CreateLogger<RedisMultiplexer>();
+
         public async Task<TD> GetAsync(object key, CancellationToken cancellationToken)
         {
             var connectionMultiplexer =
@@ -42,6 +52,94 @@ namespace White.Knight.Redis
                     .Deserialize<TD>(bytes);
 
             return value;
+        }
+
+        public async Task SetAsync(object key, TD value, CancellationToken cancellationToken)
+        {
+            var connectionMultiplexer =
+                await
+                    redisMultiplexer
+                        .GetAsync();
+
+            var cache =
+                connectionMultiplexer
+                    .GetDatabase();
+
+            var cacheValue =
+                JsonSerializer
+                    .Serialize(value);
+
+            await
+                cache
+                    .StringSetAsync(
+                        key.ToString(),
+                        cacheValue
+                    );
+
+            // TODO: caching expiry can be a redis config option
+        }
+
+        public async Task<bool> RemoveAsync(object key, CancellationToken cancellationToken)
+        {
+            var connectionMultiplexer =
+                await
+                    redisMultiplexer
+                        .GetAsync();
+
+            var cache =
+                connectionMultiplexer
+                    .GetDatabase();
+            try
+            {
+                var deletedKeys = 0;
+
+                await foreach (var keyMatch in GetKeysAsync(connectionMultiplexer, key.ToString())
+                                   .WithCancellation(cancellationToken))
+                {
+                    var result =
+                        await
+                            cache
+                                .KeyDeleteAsync(keyMatch);
+
+                    if (result)
+                    {
+                        _logger
+                            .LogDebug("Redis successfully removed cached entry at [{keyMatch}]", keyMatch);
+                        deletedKeys++;
+                    }
+                    else
+                    {
+                        _logger
+                            .LogWarning("Redis did not remove cached entry at [{keyMatch}]", keyMatch);
+                    }
+                }
+
+                return deletedKeys > 0;
+            }
+            catch (RedisException ex)
+            {
+                _logger
+                    .LogWarning("Error removing cached entry at [{keyMatch}]", ex.Message);
+
+                return false;
+            }
+        }
+
+        private static async IAsyncEnumerable<string> GetKeysAsync(IConnectionMultiplexer connectionMultiplexer,
+            string pattern)
+        {
+            if (string.IsNullOrWhiteSpace(pattern))
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(pattern));
+
+            foreach (var endpoint in connectionMultiplexer.GetEndPoints())
+            {
+                var server =
+                    connectionMultiplexer
+                        .GetServer(endpoint);
+
+                foreach (var key in server.Keys(pattern: pattern))
+                    yield return key.ToString();
+            }
         }
     }
 }

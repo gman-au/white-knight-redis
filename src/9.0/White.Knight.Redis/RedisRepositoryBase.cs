@@ -47,11 +47,7 @@ namespace White.Knight.Redis
                 Stopwatch
                     .Restart();
 
-                var selector =
-                    key
-                        .BuildKeySelectorExpression(KeyExpression());
-
-                var csvEntity =
+                var redisEntity =
                     await
                         _redisCache
                             .GetAsync(key, cancellationToken);
@@ -60,7 +56,7 @@ namespace White.Knight.Redis
                     .LogDebug("Retrieved single record with key [{key}] in {ms} ms", key,
                         Stopwatch.ElapsedMilliseconds);
 
-                return csvEntity;
+                return redisEntity;
             }
             catch (Exception e)
             {
@@ -76,14 +72,111 @@ namespace White.Knight.Redis
             }
         }
 
-        public Task<TD> AddOrUpdateAsync(IUpdateCommand<TD> command, CancellationToken cancellationToken = new CancellationToken())
+        public virtual async Task<TD> AddOrUpdateAsync(
+            IUpdateCommand<TD> command,
+            CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return await AddOrUpdateWithModifiedAsync(
+                command.Entity,
+                command.Inclusions,
+                command.Exclusions,
+                cancellationToken
+            );
         }
 
-        public Task<object> DeleteRecordAsync(ISingleRecordCommand<TD> command, CancellationToken cancellationToken = new CancellationToken())
+        public async Task<object> DeleteRecordAsync(
+            ISingleRecordCommand<TD> command,
+            CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var key = command.Key;
+
+            try
+            {
+                Logger
+                    .LogDebug("Deleting record with key [{key}]", key);
+
+                Stopwatch
+                    .Restart();
+
+                await
+                    _redisCache
+                        .RemoveAsync(key, cancellationToken);
+
+                Logger
+                    .LogDebug("Deleted record with key [{key}] in {ms} ms", key, Stopwatch.ElapsedMilliseconds);
+
+                return key;
+            }
+            catch (Exception e)
+            {
+                Logger
+                    .LogError("Error deleting record key [{key}]: {error}", key, e.Message);
+
+                throw RethrowRepositoryException(e);
+            }
+            finally
+            {
+                Stopwatch
+                    .Stop();
+            }
+        }
+
+        private async Task<TD> AddOrUpdateWithModifiedAsync(
+            TD sourceEntity,
+            Expression<Func<TD, object>>[] fieldsToModify,
+            Expression<Func<TD, object>>[] fieldsToPreserve,
+            CancellationToken cancellationToken
+        )
+        {
+            TD entityToCommit;
+
+            try
+            {
+                Logger
+                    .LogDebug("Upserting record of type [{type}]", typeof(TD).Name);
+
+                Stopwatch
+                    .Restart();
+
+                var key =
+                    KeyExpression()
+                        .Compile()
+                        .Invoke(sourceEntity);
+
+                var targetEntity =
+                    await
+                        _redisCache
+                            .GetAsync(key, cancellationToken);
+
+                entityToCommit =
+                    sourceEntity
+                        .ApplyInclusionStrategy(
+                            targetEntity,
+                            fieldsToModify,
+                            fieldsToPreserve);
+
+                await
+                    _redisCache
+                        .SetAsync(key, entityToCommit, cancellationToken);
+
+                Logger
+                    .LogDebug("Upserted record of type [{type}] in {ms} ms", typeof(TD).Name,
+                        Stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception e)
+            {
+                Logger
+                    .LogError("Error upserting record of type [{type}]: {error}", typeof(TD).Name, e.Message);
+
+                throw RethrowRepositoryException(e);
+            }
+            finally
+            {
+                Stopwatch
+                    .Stop();
+            }
+
+            return entityToCommit;
         }
     }
 }
