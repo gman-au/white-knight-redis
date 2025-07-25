@@ -25,7 +25,7 @@ namespace White.Knight.Redis.Tests.Integration
 
             try
             {
-                var redisContainer =
+                /*var redisContainer =
                     new RedisBuilder()
                         .WithImage("redis/redis-stack:latest")
                         .WithName("redis-test-harness")
@@ -34,7 +34,7 @@ namespace White.Knight.Redis.Tests.Integration
 
                 redisContainer
                     .StartAsync()
-                    .Wait();
+                    .Wait();*/
             }
             catch (Exception ex)
             {

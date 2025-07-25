@@ -5,6 +5,8 @@ namespace White.Knight.Redis
 {
     public interface IRedisCache<T> where T : new()
     {
+        Task CreateOrUpdateIndexAsync();
+
         Task<T> GetAsync(object key, CancellationToken cancellationToken);
 
         Task SetAsync(object key, T value, CancellationToken cancellationToken);

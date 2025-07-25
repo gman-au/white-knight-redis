@@ -35,7 +35,7 @@
         <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.6"/>
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.6"/>
         <PackageReference Include="NRedisStack" Version="1.0.0" />
-        <PackageReference Include="White.Knight.Injection.Abstractions" Version="9.0.5" />
+        <PackageReference Include="White.Knight.Injection.Abstractions" Version="9.0.7" />
     </ItemGroup>
 
     <!-- Include referenced project outputs -->

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
+using White.Knight.Redis.Extensions;
 using White.Knight.Redis.Options;
 
 namespace White.Knight.Redis
@@ -23,6 +24,21 @@ namespace White.Knight.Redis
         private readonly ILogger<RedisMultiplexer> _logger =
             (loggerFactory ?? NullLoggerFactory.Instance)
             .CreateLogger<RedisMultiplexer>();
+
+        public async Task CreateOrUpdateIndexAsync()
+        {
+            var connectionMultiplexer =
+                await
+                    redisMultiplexer
+                        .GetAsync();
+
+            var cache =
+                connectionMultiplexer
+                    .GetDatabase();
+
+            cache
+                .CreateFtIndexIfNotExists<TD>();
+        }
 
         public async Task<TD> GetAsync(object key, CancellationToken cancellationToken)
         {
@@ -39,7 +55,9 @@ namespace White.Knight.Redis
                 await
                     cache
                         .JSON()
-                        .GetAsync(key.ToString());
+                        .GetAsync(
+                            key.ToString()
+                        );
 
             if (result.IsNull)
                 return default;
@@ -77,7 +95,7 @@ namespace White.Knight.Redis
                     .SetAsync(
                         new RedisKey(key.ToString()),
                         new RedisValue("$"),
-                        new RedisValue(cacheValue)
+                        cacheValue
                     );
 
             // TODO: caching expiry can / should be a redis config option
