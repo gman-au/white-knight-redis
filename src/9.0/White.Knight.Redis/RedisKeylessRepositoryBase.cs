@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using White.Knight.Domain;
 using White.Knight.Interfaces;
 using White.Knight.Interfaces.Command;
-using White.Knight.Redis.Extensions;
 using White.Knight.Redis.Options;
 
 namespace White.Knight.Redis
@@ -16,14 +15,14 @@ namespace White.Knight.Redis
         where TD : new()
     {
         private readonly IRedisCache<TD> _redisCache;
-        private readonly IRepositoryExceptionWrapper _repositoryExceptionWrapper;
+        private readonly IRepositoryExceptionRethrower _repositoryExceptionWrapper;
         protected readonly ILogger Logger;
         protected readonly Stopwatch Stopwatch = new();
 
         protected RedisKeylessRepositoryBase(RedisRepositoryFeatures<TD> repositoryFeatures)
         {
             _redisCache = repositoryFeatures.RedisCache;
-            _repositoryExceptionWrapper = repositoryFeatures.ExceptionWrapper;
+            _repositoryExceptionWrapper = repositoryFeatures.ExceptionRethrower;
 
             Logger =
                 repositoryFeatures
@@ -39,9 +38,7 @@ namespace White.Knight.Redis
 
         public Task<RepositoryResult<TP>> QueryAsync<TP>(IQueryCommand<TD, TP> command, CancellationToken cancellationToken = new CancellationToken())
         {
-            var sqlQueryText =
-                command
-                    .ToSql();
+            var sqlQueryText = "TEST";
 
             Logger?
                 .LogDebug(

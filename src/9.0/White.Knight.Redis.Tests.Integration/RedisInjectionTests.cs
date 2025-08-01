@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using White.Knight.Injection.Abstractions;
 using White.Knight.Redis.Injection;
 using White.Knight.Redis.Options;
 using White.Knight.Redis.Tests.Integration.Repositories;
@@ -25,7 +26,8 @@ namespace White.Knight.Redis.Tests.Integration
                     .AddAttributedRedisRepositories(RepositoryAssembly);
 
                 ServiceCollection
-                    .AddRedisRepositoryOptions();
+                    .AddRepositoryFeatures()
+                    .AddRedisRepositoryFeatures();
             }
 
             public override void AssertLoggerFactoryResolved()

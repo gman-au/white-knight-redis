@@ -6,13 +6,13 @@ namespace White.Knight.Redis.Options
 {
     public class RedisRepositoryFeatures<T>(
         IRedisCache<T> redisCache,
-        IRepositoryExceptionWrapper exceptionWrapper = null,
+        IRepositoryExceptionRethrower exceptionRethrower = null,
         ILoggerFactory loggerFactory = null)
-        : IRepositoryOptions<T> where T : new()
+        : IRedisRepositoryFeatures<T> where T : new()
     {
         public IRedisCache<T> RedisCache { get; set; } = redisCache;
 
-        public IRepositoryExceptionWrapper ExceptionWrapper { get; set; } = exceptionWrapper;
+        public IRepositoryExceptionRethrower ExceptionRethrower { get; set; } = exceptionRethrower;
 
         public ILoggerFactory LoggerFactory { get; set; } = loggerFactory ?? new NullLoggerFactory();
     }

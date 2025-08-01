@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
-using Testcontainers.Redis;
 using White.Knight.Tests.Abstractions;
 using White.Knight.Tests.Abstractions.Data;
 

@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using System.Threading.Tasks;
+using White.Knight.Abstractions.Fluent;
 using White.Knight.Redis.Injection;
 using White.Knight.Redis.Tests.Integration.Repositories;
 using White.Knight.Tests.Abstractions;
@@ -18,6 +20,19 @@ namespace White.Knight.Redis.Tests.Integration
 
         private class CsvRepositoryTestContext : RepositoryTestContextBase, IRepositoryTestContext
         {
+            public override async Task ActSearchByNameContainsAsync()
+            {
+                Results =
+                    await
+                        Sut
+                            .QueryAsync
+                            (
+                                new RedisCustomerSpecByCustomerNameContains
+                                        ("rt")
+                                    .ToQueryCommand()
+                            );
+            }
+
             public CsvRepositoryTestContext(ITestOutputHelper testOutputHelper)
             {
                 // specify csv harness
@@ -33,7 +48,7 @@ namespace White.Knight.Redis.Tests.Integration
                     .ArrangeXunitOutputLogging(testOutputHelper);
 
                 ServiceCollection
-                    .AddRedisRepositoryOptions();
+                    .AddRedisRepositoryFeatures();
 
                 LoadServiceProvider();
             }

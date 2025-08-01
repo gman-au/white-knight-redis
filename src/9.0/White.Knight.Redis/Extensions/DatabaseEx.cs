@@ -8,8 +8,20 @@ using StackExchange.Redis;
 
 namespace White.Knight.Redis.Extensions
 {
-    internal static class CacheEx
+    internal static class DatabaseEx
     {
+        public static string GetIndexName<TD>() where TD : new()
+        {
+            var entityType = typeof(TD);
+
+            var entityTypeName =
+                entityType
+                    .Name
+                    .ToLower();
+
+            return $"{entityTypeName}Idx";
+        }
+
         public static void CreateFtIndexIfNotExists<TD>(this IDatabase cache) where TD : new()
         {
             var entityType = typeof(TD);
@@ -21,7 +33,7 @@ namespace White.Knight.Redis.Extensions
 
             var indexStringBuilder = new StringBuilder();
 
-            var indexName = $"{entityTypeName}Idx";
+            var indexName = GetIndexName<TD>();
 
             indexStringBuilder
                 .Append($"FT.CREATE {entityTypeName}Idx ON JSON PREFIX 1 {entityTypeName}: SCHEMA ");

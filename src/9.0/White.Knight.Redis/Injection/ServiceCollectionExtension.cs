@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
 using White.Knight.Injection.Abstractions;
 using White.Knight.Redis.Attribute;
 using White.Knight.Redis.Options;
@@ -38,7 +37,7 @@ namespace White.Knight.Redis.Injection
 			return services;
 		}
 
-		public static IServiceCollection AddRedisRepositoryOptions(this IServiceCollection services)
+		public static IServiceCollection AddRedisRepositoryFeatures(this IServiceCollection services)
 		{
 			services
 				.AddScoped(typeof(RedisRepositoryFeatures<>), typeof(RedisRepositoryFeatures<>))
