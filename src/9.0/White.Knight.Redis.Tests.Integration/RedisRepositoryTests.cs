@@ -1,7 +1,5 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using White.Knight.Redis.Injection;
 using White.Knight.Redis.Tests.Integration.Repositories;
 using White.Knight.Tests.Abstractions;

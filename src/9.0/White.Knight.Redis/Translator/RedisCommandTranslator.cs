@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq.Expressions;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using White.Knight.Abstractions.Extensions;
 using White.Knight.Domain;
 using White.Knight.Domain.Exceptions;
 using White.Knight.Interfaces;
 using White.Knight.Interfaces.Command;
+using ClassEx = White.Knight.Redis.Extensions.ClassEx;
 
 namespace White.Knight.Redis.Translator
 {
@@ -35,19 +36,31 @@ namespace White.Knight.Redis.Translator
         public RedisTranslationResult Translate<TP>(IQueryCommand<TD, TP> command)
         {
             var specification = command.Specification;
+            var pagingOptions = command.PagingOptions;
 
             try
             {
-                var queryBuilder = new StringBuilder();
-
                 var query = Translate(specification);
 
                 _logger
                     .LogDebug("Translated Query: ({specification}) [{query}]", specification.GetType().Name, query);
 
+                var page = pagingOptions?.Page;
+                var pageSize = pagingOptions?.PageSize;
+
+                var sortDescending = pagingOptions?.Descending;
+
+                var sort =
+                    ClassEx
+                        .ExtractPropertyInfo<TD>(pagingOptions?.OrderBy);
+
                 return new RedisTranslationResult
                 {
-                    Query = query
+                    Query = query,
+                    Page = page,
+                    PageSize = pageSize,
+                    SortDescending = sortDescending,
+                    SortByField = sort?.Name
                 };
             }
             catch (Exception e) when (e is NotImplementedException or UnparsableSpecificationException)

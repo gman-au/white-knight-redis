@@ -188,7 +188,13 @@ namespace White.Knight.Redis
             }
         }
 
-        public async Task<(IQueryable<TD>, long)> QueryAsync(string queryString, CancellationToken cancellationToken)
+        public async Task<(IQueryable<TD>, long)> QueryAsync(
+            string queryString,
+            string sortByField,
+            bool? sortDescending,
+            int? page,
+            int? pageSize,
+            CancellationToken cancellationToken = default)
         {
             var connectionMultiplexer =
                 await
@@ -199,13 +205,23 @@ namespace White.Knight.Redis
                 connectionMultiplexer
                     .GetDatabase();
 
+            var query = new Query(queryString);
+
+            if (!string.IsNullOrWhiteSpace(sortByField) && sortDescending.HasValue)
+                query
+                    .SetSortBy(sortByField, !sortDescending.Value);
+
+            if (page.HasValue && pageSize.HasValue)
+                query
+                    .Limit(page.Value, pageSize.Value);
+
             var result =
                 await
                     cache
                         .FT()
                         .SearchAsync(
                             DatabaseEx.GetIndexName<TD>(),
-                            new Query(queryString));
+                            query);
 
             return
             (

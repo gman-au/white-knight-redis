@@ -50,21 +50,30 @@ namespace White.Knight.Redis
 
             try
             {
-                var query =
+                var translationResult =
                     _commandTranslator
-                        .Translate(command)?
-                        .Query;
+                        .Translate(command);
+
+                if (translationResult == null)
+                    throw new Exception("There was an error translating the Redis command.");
 
                 Logger?
                     .LogDebug(
-                        $"Redis Query: [{query}]"
+                        "Redis Query: [{query}], Sort: [{sortField}, desc={desc}]",
+                        translationResult.Query,
+                        translationResult.SortByField,
+                        translationResult.SortDescending
                     );
 
                 var result =
                     await
                         _redisCache
                             .QueryAsync(
-                                query,
+                                translationResult.Query,
+                                translationResult.SortByField,
+                                translationResult.SortDescending,
+                                translationResult.Page,
+                                translationResult.PageSize,
                                 cancellationToken
                             );
 
