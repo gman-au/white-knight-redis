@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Docker.DotNet;
+using DotNet.Testcontainers.Containers;
 using Testcontainers.Redis;
 
 namespace White.Knight.Redis.Tests.Integration
@@ -56,6 +57,11 @@ namespace White.Knight.Redis.Tests.Integration
                 await
                     _redisContainer
                         .DisposeAsync();
+
+                do
+                {
+                    await Task.Delay(5000);
+                } while (_redisContainer.State != TestcontainersStates.Undefined);
             }
         }
     }
