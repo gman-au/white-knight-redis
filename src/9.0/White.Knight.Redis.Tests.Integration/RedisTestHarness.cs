@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Docker.DotNet;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
+using Testcontainers.Redis;
 using White.Knight.Tests.Abstractions;
 using White.Knight.Tests.Abstractions.Data;
 
@@ -21,34 +23,15 @@ namespace White.Knight.Redis.Tests.Integration
         {
             _testDataGenerator = testDataGenerator;
             _redisMultiplexer = redisMultiplexer;
-
-            try
-            {
-                /*var redisContainer =
-                    new RedisBuilder()
-                        .WithImage("redis/redis-stack:latest")
-                        .WithName("redis-test-harness")
-                        .WithPortBinding(6379, 6379)
-                        .Build();
-
-                redisContainer
-                    .StartAsync()
-                    .Wait();*/
-            }
-            catch (Exception ex)
-            {
-                Assert
-                    .Fail($"Could not set up Redis container: {ex.Message}");
-            }
         }
 
-        public async Task<AbstractedRepositoryTestData> GenerateRepositoryTestDataAsync()
+        public async Task<AbstractedRepositoryTestData> SetupRepositoryTestDataAsync()
         {
             var testData =
                 _testDataGenerator
                     .GenerateRepositoryTestData();
 
-            // put 'records' into tables i.e. write to CSV files in advance of the tests
+            // put 'records' into tables i.e. write to redis cache in advance of the tests
             await WriteRecordsAsync(testData.Addresses, o => o.AddressId);
             await WriteRecordsAsync(testData.Customers, o => o.CustomerId);
             await WriteRecordsAsync(testData.Orders, o => o.OrderId);

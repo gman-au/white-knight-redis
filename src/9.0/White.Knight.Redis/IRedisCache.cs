@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace White.Knight.Redis
@@ -9,8 +10,12 @@ namespace White.Knight.Redis
 
         Task<T> GetAsync(object key, CancellationToken cancellationToken);
 
+        Task<IQueryable<T>> GetAllAsync(CancellationToken cancellationToken);
+
         Task SetAsync(object key, T value, CancellationToken cancellationToken);
 
         Task<bool> RemoveAsync(object key, CancellationToken cancellationToken);
+
+        Task<(IQueryable<T>, long)> QueryAsync(string queryString, CancellationToken cancellationToken);
     }
 }

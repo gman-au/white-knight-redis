@@ -11,13 +11,13 @@ using White.Knight.Tests.Domain;
 
 namespace White.Knight.Redis.Tests.Integration
 {
-    public class RedisInjectionTests() : AbstractedInjectionTests(new CsvInjectionTestContext())
+    public class RedisInjectionTests() : AbstractedInjectionTests(new RedisInjectionTestContext())
     {
         private static readonly Assembly RepositoryAssembly =
             Assembly
                 .GetAssembly(typeof(AddressRepository));
 
-        private class CsvInjectionTestContext : InjectionTestContextBase, IInjectionTestContext
+        private class RedisInjectionTestContext : InjectionTestContextBase, IInjectionTestContext
         {
             public override void ArrangeImplementedServices()
             {

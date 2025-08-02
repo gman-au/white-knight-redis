@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NRedisStack.RedisStackCommands;
+using NRedisStack.Search;
 using StackExchange.Redis;
 using White.Knight.Redis.Extensions;
 using White.Knight.Redis.Options;
@@ -72,6 +74,45 @@ namespace White.Knight.Redis
                     .Deserialize<TD>(bytes);
 
             return value;
+        }
+
+        public async Task<IQueryable<TD>> GetAllAsync(CancellationToken cancellationToken)
+        {
+            var connectionMultiplexer =
+                await
+                    redisMultiplexer
+                        .GetAsync();
+
+            var cache =
+                connectionMultiplexer
+                    .GetDatabase();
+
+            var results = new List<TD>();
+
+            var keyPattern = $"{DatabaseEx.GetKeyPrefix<TD>()}:*";
+
+            foreach (var endpoint in connectionMultiplexer.GetEndPoints())
+            {
+                var server =
+                    connectionMultiplexer
+                        .GetServer(endpoint);
+
+                await foreach (var key in server.KeysAsync(pattern: keyPattern).WithCancellation(cancellationToken))
+                {
+                    var cacheValue =
+                        await
+                            cache
+                                .JSON()
+                                .GetAsync<TD>(key);
+
+                    if (cacheValue != null)
+                        results.Add(cacheValue);
+                }
+            }
+
+            return
+                results
+                    .AsQueryable();
         }
 
         public async Task SetAsync(object key, TD value, CancellationToken cancellationToken)
@@ -145,6 +186,37 @@ namespace White.Knight.Redis
 
                 return false;
             }
+        }
+
+        public async Task<(IQueryable<TD>, long)> QueryAsync(string queryString, CancellationToken cancellationToken)
+        {
+            var connectionMultiplexer =
+                await
+                    redisMultiplexer
+                        .GetAsync();
+
+            var cache =
+                connectionMultiplexer
+                    .GetDatabase();
+
+            var result =
+                await
+                    cache
+                        .FT()
+                        .SearchAsync(
+                            DatabaseEx.GetIndexName<TD>(),
+                            new Query(queryString));
+
+            return
+            (
+                result
+                    .ToJson()
+                    .Select(o => JsonSerializer.Deserialize<TD>(o))
+                    .AsQueryable(),
+                result
+                    .Documents
+                    .Count
+            );
         }
 
         private static async IAsyncEnumerable<string> GetKeysAsync(IConnectionMultiplexer connectionMultiplexer,

@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using White.Knight.Injection.Abstractions;
+using White.Knight.Interfaces;
 using White.Knight.Redis.Attribute;
 using White.Knight.Redis.Options;
+using White.Knight.Redis.Translator;
 
 namespace White.Knight.Redis.Injection
 {
@@ -22,6 +24,9 @@ namespace White.Knight.Redis.Injection
             services
 	            .AddSingleton<IRedisMultiplexer, RedisMultiplexer>()
                 .AddTransient(typeof(IRedisCache<>), typeof(RedisCache<>));
+
+            services
+                .AddScoped(typeof(ICommandTranslator<,>), typeof(RedisCommandTranslator<,>));
 
             return services;
         }

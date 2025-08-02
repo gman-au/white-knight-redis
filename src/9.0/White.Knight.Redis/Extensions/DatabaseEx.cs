@@ -12,6 +12,11 @@ namespace White.Knight.Redis.Extensions
     {
         public static string GetIndexName<TD>() where TD : new()
         {
+            return $"{GetKeyPrefix<TD>()}Idx";
+        }
+
+        public static string GetKeyPrefix<TD>() where TD : new()
+        {
             var entityType = typeof(TD);
 
             var entityTypeName =
@@ -19,7 +24,7 @@ namespace White.Knight.Redis.Extensions
                     .Name
                     .ToLower();
 
-            return $"{entityTypeName}Idx";
+            return entityTypeName;
         }
 
         public static void CreateFtIndexIfNotExists<TD>(this IDatabase cache) where TD : new()
@@ -65,16 +70,17 @@ namespace White.Knight.Redis.Extensions
             }
             catch (RedisServerException ex)
             {
-                if (!$"{indexName}: no such index".Equals(ex.Message))
+                if (
+                    !$"{indexName}: no such index".Equals(ex.Message) &&
+                    !$"Unknown index name".Equals(ex.Message)
+                )
                     throw;
             }
 
             if (infoResult != null)
-            {
                 cache
                     .FT()
                     .DropIndex(indexName);
-            }
 
             cache
                 .FT()

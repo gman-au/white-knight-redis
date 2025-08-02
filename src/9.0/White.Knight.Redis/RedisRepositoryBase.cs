@@ -7,7 +7,9 @@ using White.Knight.Abstractions.Extensions;
 using White.Knight.Abstractions.Fluent;
 using White.Knight.Interfaces;
 using White.Knight.Interfaces.Command;
+using White.Knight.Redis.Extensions;
 using White.Knight.Redis.Options;
+using White.Knight.Redis.Translator;
 
 namespace White.Knight.Redis
 {
@@ -40,7 +42,7 @@ namespace White.Knight.Redis
             var key = command.Key;
 
             var redisKey =
-                $"{typeof(TD).Name}:{key}"
+                $"{DatabaseEx.GetKeyPrefix<TD>()}:{key}"
                     .ToLowerInvariant();
 
             try
@@ -95,7 +97,7 @@ namespace White.Knight.Redis
             var key = command.Key;
 
             var redisKey =
-                $"{typeof(TD).Name}:{key}"
+                $"{DatabaseEx.GetKeyPrefix<TD>()}:{key}"
                     .ToLowerInvariant();
 
             try
@@ -150,11 +152,11 @@ namespace White.Knight.Redis
                         .Invoke(sourceEntity);
 
                 redisKey =
-                    $"{typeof(TD).Name}:{key}"
+                    $"{DatabaseEx.GetKeyPrefix<TD>()}:{key}"
                         .ToLowerInvariant();
 
                 Logger
-                    .LogDebug("Upserting record of type [{type}] with key [{redisKey}]", typeof(TD).Name, redisKey);
+                    .LogDebug("Upserting record of type [{type}] with key [{redisKey}]", DatabaseEx.GetKeyPrefix<TD>(), redisKey);
 
                 var targetEntity =
                     await
@@ -173,13 +175,13 @@ namespace White.Knight.Redis
                         .SetAsync(redisKey, entityToCommit, cancellationToken);
 
                 Logger
-                    .LogDebug("Upserted record of type [{type}] with key [{redisKey}] in {ms} ms", typeof(TD).Name, redisKey,
+                    .LogDebug("Upserted record of type [{type}] with key [{redisKey}] in {ms} ms", DatabaseEx.GetKeyPrefix<TD>(), redisKey,
                         Stopwatch.ElapsedMilliseconds);
             }
             catch (Exception e)
             {
                 Logger
-                    .LogError("Error upserting record of type [{type}] with key [{redisKey}]: {error}", typeof(TD).Name, redisKey, e.Message);
+                    .LogError("Error upserting record of type [{type}] with key [{redisKey}]: {error}", DatabaseEx.GetKeyPrefix<TD>(), redisKey, e.Message);
 
                 throw RethrowRepositoryException(e);
             }
