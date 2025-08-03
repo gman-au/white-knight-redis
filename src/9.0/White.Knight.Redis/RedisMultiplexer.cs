@@ -38,10 +38,7 @@ namespace White.Knight.Redis
                 _connectionMultiplexer =
                     await
                         ConnectionMultiplexer
-                            .ConnectAsync(
-                                _options
-                                    .ConnectionString
-                            );
+                            .ConnectAsync($"{_options.ConnectionString},allowAdmin=true");
 
                 _connected = true;
 

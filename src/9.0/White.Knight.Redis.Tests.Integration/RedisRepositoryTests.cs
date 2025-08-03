@@ -19,7 +19,7 @@ namespace White.Knight.Redis.Tests.Integration
             Assembly
                 .GetAssembly(typeof(AddressRepository));
 
-        private readonly TestContainerManager _testContainerManager = new();
+        private readonly TestContainerManager _testContainerManager = new(helper);
 
         public async Task InitializeAsync()
         {
