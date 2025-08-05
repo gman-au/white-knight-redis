@@ -5,33 +5,22 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
-using White.Knight.Redis.Tests.Integration.Extensions;
+using White.Knight.Redis.Extensions;
 using White.Knight.Tests.Abstractions;
 using White.Knight.Tests.Abstractions.Data;
 
 namespace White.Knight.Redis.Tests.Integration
 {
-    public class RedisTestHarness : ITestHarness
+    public class RedisTestHarness(
+        ITestDataGenerator testDataGenerator,
+        IRedisMultiplexer redisMultiplexer)
+        : ITestHarness
     {
-        private readonly IRedisMultiplexer _redisMultiplexer;
-        private readonly ITestDataGenerator _testDataGenerator;
-
-        public RedisTestHarness(
-            ITestDataGenerator testDataGenerator,
-            IRedisMultiplexer redisMultiplexer)
-        {
-            _testDataGenerator = testDataGenerator;
-            _redisMultiplexer = redisMultiplexer;
-        }
-
         public async Task<AbstractedRepositoryTestData> SetupRepositoryTestDataAsync()
         {
             var testData =
-                _testDataGenerator
+                testDataGenerator
                     .GenerateRepositoryTestData();
-
-            // purge cache
-            await FlushCacheAsync();
 
             // put 'records' into tables i.e. write to redis cache in advance of the tests
             await WriteRecordsAsync(testData.Addresses, o => o.AddressId);
@@ -41,28 +30,18 @@ namespace White.Knight.Redis.Tests.Integration
             return testData;
         }
 
-        private async Task FlushCacheAsync()
+        private async Task WriteRecordsAsync<T>(IEnumerable<T> records, Expression<Func<T, object>> keyExpr) where T : new()
         {
             var connectionMultiplexer =
                 await
-                    _redisMultiplexer
-                        .GetAsync();
-
-            await
-                connectionMultiplexer
-                    .FlushCacheAsync();
-        }
-
-        private async Task WriteRecordsAsync<T>(IEnumerable<T> records, Expression<Func<T, object>> keyExpr)
-        {
-            var connectionMultiplexer =
-                await
-                    _redisMultiplexer
+                    redisMultiplexer
                         .GetAsync();
 
             var cache =
                 connectionMultiplexer
                     .GetDatabase();
+
+            var taskList = new List<Task>();
 
             foreach (var record in records)
             {
@@ -79,7 +58,7 @@ namespace White.Knight.Redis.Tests.Integration
                     JsonSerializer
                         .Serialize(record);
 
-                await
+                var writeTask =
                     cache
                         .JSON()
                         .SetAsync(
@@ -87,7 +66,20 @@ namespace White.Knight.Redis.Tests.Integration
                             new RedisValue("$"),
                             new RedisValue(value)
                         );
+
+                taskList
+                    .Add(writeTask);
             }
+
+            // Block until the write task is completed
+            cache
+                .WaitAll(
+                    taskList
+                        .ToArray()
+                );
+
+            cache
+                .CreateFtIndexIfNotExists<T>();
         }
     }
 }

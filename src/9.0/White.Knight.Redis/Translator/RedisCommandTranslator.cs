@@ -2,7 +2,6 @@
 using System.Linq.Expressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using White.Knight.Abstractions.Extensions;
 using White.Knight.Domain;
 using White.Knight.Domain.Exceptions;
 using White.Knight.Interfaces;

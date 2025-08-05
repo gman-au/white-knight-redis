@@ -1,48 +1,39 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
-using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using Testcontainers.Redis;
-using White.Knight.Redis.Tests.Integration.Extensions;
 using Xunit.Abstractions;
 
 namespace White.Knight.Redis.Tests.Integration
 {
-    public class TestContainerManager : ITestContainerManager
+    public class TestContainerManager(ITestOutputHelper helper) : ITestContainerManager
     {
-        private const int RedisPort = 6379;
-
-        private readonly RedisBuilder _redisBuilder;
         private RedisContainer _redisContainer;
-        private readonly ITestOutputHelper _helper;
 
-        public TestContainerManager(ITestOutputHelper helper)
+        private static RedisBuilder GetRedisBuilder(int hostedPort)
         {
-            _redisBuilder =
+            return
                 new RedisBuilder()
                     .WithImage("redis/redis-stack:latest")
                     .WithName($"redis-test-harness-{Guid.NewGuid()}")
-                    .WithPortBinding(RedisPort, RedisPort)
-                    .WithEnvironment("REDIS_ARGS", "--save '' --appendonly no")
-                    .WithTmpfsMount($"/data/{Guid.NewGuid()}") // Mount data directory in memory
-                    .WithWaitStrategy(
-                        Wait
-                            .ForUnixContainer()
-                            .UntilPortIsAvailable(RedisPort)
-                            .UntilMessageIsLogged("Ready to accept connections")
-                    );
-
-            _helper = helper;
+                    .WithPortBinding(hostedPort, 6379)
+                    // .WithEnvironment("REDIS_ARGS", "--save '' --appendonly no")
+                    // .WithTmpfsMount($"/data/{Guid.NewGuid()}") // Mount data directory in memory
+                .WithWaitStrategy(
+                    Wait
+                        .ForUnixContainer()
+                        .UntilPortIsAvailable(6379)
+                        .UntilMessageIsLogged("Ready to accept connections")
+                );
+                ;
         }
 
-        public async Task StartAsync()
+        public async Task StartAsync(int hostedPort)
         {
             /*
                  */
             _redisContainer =
-                _redisBuilder
+                GetRedisBuilder(hostedPort)
                     .Build();
 
             await
@@ -51,9 +42,9 @@ namespace White.Knight.Redis.Tests.Integration
             /*
              */
 
-            _helper.WriteLine($"Started container: {_redisContainer.Name}");
-            _helper.WriteLine($"Container ID: {_redisContainer.Id}");
-            _helper.WriteLine($"Connection: {_redisContainer.GetConnectionString()}");
+            helper.WriteLine($"Started container: {_redisContainer.Name}");
+            helper.WriteLine($"Container ID: {_redisContainer.Id}");
+            helper.WriteLine($"Connection: {_redisContainer.GetConnectionString()}");
         }
 
         public async Task StopAsync()
@@ -70,9 +61,9 @@ namespace White.Knight.Redis.Tests.Integration
 
                 _redisContainer = null;
 
-                await
-                    RedisPort
-                        .WaitForPortToBeReleased(_helper, TimeSpan.FromSeconds(20));
+                /*await
+                    _portNumber
+                        .WaitForPortToBeReleased(_helper, TimeSpan.FromSeconds(20));*/
 
                 /*do
                 {

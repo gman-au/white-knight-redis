@@ -32,8 +32,8 @@ namespace White.Knight.Redis
         {
             try
             {
-                if (_connected)
-                    return _connectionMultiplexer;
+                // if (_connected)
+                //     return _connectionMultiplexer;
 
                 _connectionMultiplexer =
                     await
@@ -47,7 +47,7 @@ namespace White.Knight.Redis
             catch (RedisConnectionException ex)
             {
                 _logger
-                    .LogError("Error connecting to Redis client [{client}]: {error}", _connectionMultiplexer.ClientName,
+                    .LogError("Error connecting to Redis client [{client}]: {error}", _connectionMultiplexer?.ClientName,
                         ex.Message);
 
                 throw;

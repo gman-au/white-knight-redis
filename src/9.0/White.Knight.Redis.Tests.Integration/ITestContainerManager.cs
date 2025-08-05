@@ -4,7 +4,7 @@ namespace White.Knight.Redis.Tests.Integration
 {
     public interface ITestContainerManager
     {
-        Task StartAsync();
+        Task StartAsync(int hostedPort);
 
         Task StopAsync();
     }

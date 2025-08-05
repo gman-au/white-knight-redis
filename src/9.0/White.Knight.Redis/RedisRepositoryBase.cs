@@ -9,7 +9,6 @@ using White.Knight.Interfaces;
 using White.Knight.Interfaces.Command;
 using White.Knight.Redis.Extensions;
 using White.Knight.Redis.Options;
-using White.Knight.Redis.Translator;
 
 namespace White.Knight.Redis
 {
