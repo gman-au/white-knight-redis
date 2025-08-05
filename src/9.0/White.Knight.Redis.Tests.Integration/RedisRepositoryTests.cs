@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using White.Knight.Redis.Injection;
 using White.Knight.Redis.Tests.Integration.Repositories;
 using White.Knight.Tests.Abstractions;
@@ -66,6 +68,8 @@ namespace White.Knight.Redis.Tests.Integration
                 ServiceCollection
                     .AddRedisRepositoryFeatures();
 
+                ModifyConnectionReusePolicy(ServiceCollection);
+
                 LoadServiceProvider();
             }
 
@@ -86,6 +90,20 @@ namespace White.Knight.Redis.Tests.Integration
                     .AddConfiguration(existingConfiguration)
                     .AddInMemoryCollection(inMemoryCollection)
                     .Build();
+            }
+
+            private static void ModifyConnectionReusePolicy(ServiceCollection serviceCollection)
+            {
+                // force new connections for multiplexer
+                var serviceDescriptor =
+                    serviceCollection
+                        .First(descriptor => descriptor.ServiceType == typeof(Func<IRedisMultiplexer, bool>));
+
+                serviceCollection
+                    .Remove(serviceDescriptor);
+
+                serviceCollection
+                    .AddSingleton<Func<IRedisMultiplexer, bool>>(_ => false);
             }
         }
     }

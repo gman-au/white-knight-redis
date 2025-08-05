@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -11,13 +12,17 @@ namespace White.Knight.Redis
     {
         private readonly ILogger<RedisMultiplexer> _logger;
         private readonly RedisRepositoryConfigurationOptions _options;
+        private readonly Func<IRedisMultiplexer, bool> _redisReuseConnectionPolicyFunc;
         private bool _connected;
         private IConnectionMultiplexer _connectionMultiplexer;
 
         public RedisMultiplexer(
             IOptions<RedisRepositoryConfigurationOptions> optionsAccessor,
+            Func<IRedisMultiplexer, bool> redisReuseConnectionPolicyFunc,
             ILoggerFactory loggerFactory = null)
         {
+            _redisReuseConnectionPolicyFunc = redisReuseConnectionPolicyFunc;
+
             _logger =
                 (loggerFactory ??
                  NullLoggerFactory.Instance)
@@ -32,8 +37,8 @@ namespace White.Knight.Redis
         {
             try
             {
-                // if (_connected)
-                //     return _connectionMultiplexer;
+                if (_connected && _redisReuseConnectionPolicyFunc(this))
+                    return _connectionMultiplexer;
 
                 _connectionMultiplexer =
                     await

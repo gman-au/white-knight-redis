@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using White.Knight.Injection.Abstractions;
@@ -26,7 +27,8 @@ namespace White.Knight.Redis.Injection
                 .AddTransient(typeof(IRedisCache<>), typeof(RedisCache<>));
 
             services
-                .AddScoped(typeof(ICommandTranslator<,>), typeof(RedisCommandTranslator<,>));
+                .AddScoped(typeof(ICommandTranslator<,>), typeof(RedisCommandTranslator<,>))
+                .AddConnectionReusePolicy();
 
             return services;
         }
@@ -50,5 +52,13 @@ namespace White.Knight.Redis.Injection
 
 			return services;
 		}
+
+        private static IServiceCollection AddConnectionReusePolicy(this IServiceCollection services)
+        {
+            services
+                .AddSingleton<Func<IRedisMultiplexer, bool>>(_ => true);
+
+            return services;
+        }
 	}
 }
