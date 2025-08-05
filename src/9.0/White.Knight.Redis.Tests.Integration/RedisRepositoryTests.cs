@@ -82,7 +82,7 @@ namespace White.Knight.Redis.Tests.Integration
             {
                 var inMemoryCollection = new Dictionary<string, string>
                 {
-                    ["RedisRepositoryConfigurationOptions:ConnectionString"] = $"localhost:{hostedPort}"
+                    ["RedisRepositoryConfigurationOptions:ConnectionString"] = $"127.0.0.1:{hostedPort}"
                 };
 
                 // Add the in-memory collection to the configuration
