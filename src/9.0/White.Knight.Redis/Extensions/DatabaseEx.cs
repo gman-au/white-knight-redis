@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using NRedisStack.RedisStackCommands;
 using NRedisStack.Search;
@@ -49,19 +50,10 @@ namespace White.Knight.Redis.Extensions
 
             var schema = new Schema();
 
-            foreach (var propertyInfo in entityType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
-            {
-                var name =
-                    propertyInfo
-                        .Name;
+            var nestLevel = 0;
 
-                var type =
-                    propertyInfo
-                        .PropertyType;
-
-                schema
-                    .AddMappedType(type, name);
-            }
+            schema
+                .ExpandTypeMapping(entityType, ref nestLevel);
 
             InfoResult infoResult = null;
 
@@ -105,6 +97,16 @@ namespace White.Knight.Redis.Extensions
 
             cache
                 .Wait(indexTask);
+        }
+
+        public static string GetMemberPropertyOrJsonAlias(this MemberInfo memberInfo)
+        {
+            return
+                memberInfo
+                    .GetCustomAttribute<JsonPropertyNameAttribute>()?
+                    .Name ??
+                memberInfo
+                    .Name;
         }
     }
 }

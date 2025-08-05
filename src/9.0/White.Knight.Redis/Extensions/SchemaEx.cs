@@ -1,14 +1,41 @@
 ﻿using System;
+using System.Reflection;
 using NRedisStack.Search;
 
 namespace White.Knight.Redis.Extensions
 {
     internal static class SchemaEx
     {
-        public static void AddMappedType(this Schema schema, Type type, string fieldName)
+        public static void ExpandTypeMapping(this Schema schema, Type entityType, ref int nestLevel, string prefix = null)
+        {
+            nestLevel++;
+            if (nestLevel > 2) return;
+
+            foreach (var propertyInfo in entityType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            {
+                var name =
+                    propertyInfo
+                        .GetMemberPropertyOrJsonAlias();
+
+                var type =
+                    propertyInfo
+                        .PropertyType;
+
+                schema
+                    .AddMappedType(type, name, ref nestLevel, prefix);
+            }
+        }
+
+        public static void AddMappedType(this Schema schema, Type type, string fieldName, ref int nestLevel, string prefix = null)
         {
             var aliasName = $"{fieldName}";
             var jsonFieldName = $"$.{fieldName}";
+
+            if (!string.IsNullOrEmpty(prefix))
+            {
+                aliasName = $"{prefix}.{aliasName}";
+                jsonFieldName = $"$.{aliasName}";
+            }
 
             var field =
                 FieldName
@@ -24,16 +51,17 @@ namespace White.Knight.Redis.Extensions
                     {
                         case "System.Guid":
                             schema
-                                .AddTextField(field);
+                                .AddTagField(field, sortable: true);
                             return;
                         default:
+                            schema.ExpandTypeMapping(type, ref nestLevel, fieldName);
                             return;
                     }
                 case TypeCode.DBNull:
                     break;
                 case TypeCode.Boolean:
                     schema
-                        .AddTagField(field);
+                        .AddTagField(field, sortable: true);
                     return;
                 case TypeCode.SByte:
                 case TypeCode.Byte:
@@ -47,17 +75,16 @@ namespace White.Knight.Redis.Extensions
                 case TypeCode.Double:
                 case TypeCode.Decimal:
                     schema
-                        .AddNumericField(field);
+                        .AddNumericField(field, sortable: true);
                     return;
                 case TypeCode.Char:
                 case TypeCode.String:
                     schema
-                        .AddTextField(field);
+                        .AddTextField(field, sortable: true);
                     return;
                 case TypeCode.DateTime:
                     schema
-                        .AddTextField(field);
-                        // .AddNumericField(fieldName);
+                        .AddTextField(field, sortable: true);
                     return;
             }
 

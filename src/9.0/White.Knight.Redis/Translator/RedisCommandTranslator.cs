@@ -6,6 +6,7 @@ using White.Knight.Domain;
 using White.Knight.Domain.Exceptions;
 using White.Knight.Interfaces;
 using White.Knight.Interfaces.Command;
+using White.Knight.Redis.Extensions;
 using ClassEx = White.Knight.Redis.Extensions.ClassEx;
 
 namespace White.Knight.Redis.Translator
@@ -86,31 +87,52 @@ namespace White.Knight.Redis.Translator
 
         private string Translate(Specification<TD> spec)
         {
+            var name = string.Empty;
             return spec switch
             {
                 SpecificationByAll<TD> => " * ",
-                SpecificationByNone<TD> => " FALSE ",
-                SpecificationByEquals<TD, string> eq => $"@{GetPropertyExpressionName(eq.Property.Body)}:{eq.Value}",
-                SpecificationByEquals<TD, int> eq => $"@{GetPropertyExpressionName(eq.Property.Body)}:[{eq.Value} {eq.Value}]",
-                SpecificationByEquals<TD, Guid> eq => $"@{GetPropertyExpressionName(eq.Property.Body)}:{eq.Value}",
+                SpecificationByNone<TD> => throw new UnparsableSpecificationException(),
+                SpecificationByEquals<TD, string> eq => $"@{GetPropertyExpressionName(ref name, eq.Property.Body)}:{eq.Value}",
+                SpecificationByEquals<TD, int> eq => $"@{GetPropertyExpressionName(ref name, eq.Property.Body)}:[{eq.Value} {eq.Value}]",
+                SpecificationByEquals<TD, Guid> eq => $"@{GetPropertyExpressionName(ref name, eq.Property.Body)}:{{{EscapeGuidValue(eq.Value.ToString())}}}",
                 SpecificationByAnd<TD> and => $" {Translate(and.Left)} {Translate(and.Right)} ",
                 SpecificationByOr<TD> => throw new UnparsableSpecificationException(),
-                SpecificationByTextStartsWith<TD> text => $"@{GetPropertyExpressionName(text.Property.Body)}:{text.Value}*",
-                SpecificationByTextEndsWith<TD> text => $"@{GetPropertyExpressionName(text.Property.Body)}:*{text.Value}",
-                SpecificationByTextContains<TD> text => $"@{GetPropertyExpressionName(text.Property.Body)}:*{text.Value}*",
+                SpecificationByTextStartsWith<TD> text => $"@{GetPropertyExpressionName(ref name, text.Property.Body)}:{text.Value}*",
+                SpecificationByTextEndsWith<TD> text => $"@{GetPropertyExpressionName(ref name, text.Property.Body)}:*{text.Value}",
+                SpecificationByTextContains<TD> text => $"@{GetPropertyExpressionName(ref name, text.Property.Body)}:*{text.Value}*",
                 SpecificationThatIsNotCompatible<TD> => throw new UnparsableSpecificationException(),
                 _ => throw new NotImplementedException()
             };
         }
 
-        private string GetPropertyExpressionName(Expression ex)
+        private string GetPropertyExpressionName(ref string name, Expression ex)
         {
             if (ex is MemberExpression mex)
             {
-                return mex.Member.Name;
+                if (mex.Expression is MemberExpression memex)
+                {
+                    GetPropertyExpressionName(ref name, memex);
+                }
+
+                if (!string.IsNullOrEmpty(name))
+                    name += "\\.";
+
+                name +=
+                    mex
+                        .Member
+                        .GetMemberPropertyOrJsonAlias();
+            }
+            if (ex is ConditionalExpression cex)
+            {
+                return GetPropertyExpressionName(ref name, cex.IfFalse);
             }
 
-            return null;
+            return name;
+        }
+
+        private static string EscapeGuidValue(string s)
+        {
+            return s.Replace("-", "\\-");
         }
     }
 }

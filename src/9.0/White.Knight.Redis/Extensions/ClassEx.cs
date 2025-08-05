@@ -19,13 +19,13 @@ namespace White.Knight.Redis.Extensions
 
             if (fieldBody is MemberExpression memberExpression)
             {
-                var member =
+                var memberInfo =
                     memberExpression
                         .Member;
 
                 propertyInfo =
                     entityType
-                        .GetProperty(member.Name);
+                        .GetProperty(memberInfo.Name);
 
                 return propertyInfo;
             }

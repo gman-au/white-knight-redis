@@ -61,8 +61,8 @@ namespace White.Knight.Redis
                     .LogDebug(
                         "Redis Query: [{query}], Sort: [{sortField}, desc={desc}]",
                         translationResult.Query,
-                        translationResult.SortByField,
-                        translationResult.SortDescending
+                        translationResult.SortByField ?? "<undefined>",
+                        translationResult.SortDescending?.ToString() ?? "<undefined>"
                     );
 
                 var result =

@@ -52,6 +52,9 @@ namespace White.Knight.Redis
                 Stopwatch
                     .Restart();
 
+                key
+                    .BuildKeySelectorExpression(KeyExpression());
+
                 var redisEntity =
                     await
                         _redisCache
