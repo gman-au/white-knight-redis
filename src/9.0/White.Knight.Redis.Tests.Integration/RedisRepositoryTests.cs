@@ -5,7 +5,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using White.Knight.Injection.Abstractions;
 using White.Knight.Redis.Injection;
+using White.Knight.Redis.Options;
 using White.Knight.Redis.Tests.Integration.Repositories;
 using White.Knight.Tests.Abstractions;
 using White.Knight.Tests.Abstractions.Extensions;
@@ -66,6 +68,7 @@ namespace White.Knight.Redis.Tests.Integration
                     .ArrangeXunitOutputLogging(testOutputHelper);
 
                 ServiceCollection
+                    .AddRepositoryFeatures<RedisRepositoryConfigurationOptions>(Configuration)
                     .AddRedisRepositoryFeatures();
 
                 ModifyConnectionReusePolicy(ServiceCollection);

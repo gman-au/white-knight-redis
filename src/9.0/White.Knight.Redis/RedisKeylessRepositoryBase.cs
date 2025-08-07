@@ -19,6 +19,7 @@ namespace White.Knight.Redis
         where TD : new()
     {
         private readonly ICommandTranslator<TD, RedisTranslationResult> _commandTranslator;
+        private readonly IClientSideEvaluationHandler _clientSideEvaluationHandler;
         private readonly IRedisCache<TD> _redisCache;
         private readonly IRepositoryExceptionRethrower _repositoryExceptionWrapper;
         protected readonly ILogger Logger;
@@ -29,6 +30,7 @@ namespace White.Knight.Redis
             _redisCache = repositoryFeatures.RedisCache;
             _repositoryExceptionWrapper = repositoryFeatures.ExceptionRethrower;
             _commandTranslator = repositoryFeatures.CommandTranslator;
+            _clientSideEvaluationHandler = repositoryFeatures.ClientSideEvaluationHandler;
 
             Logger =
                 repositoryFeatures
@@ -96,8 +98,8 @@ namespace White.Knight.Redis
             }
             catch (UnparsableSpecificationException)
             {
-                Logger?
-                    .LogWarning("Warning, could not parse specification");
+                _clientSideEvaluationHandler
+                    .Handle<TD>();
 
                 var queryable =
                     await

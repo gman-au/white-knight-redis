@@ -211,6 +211,15 @@ namespace White.Knight.Redis
                 query
                     .SetSortBy(sortByField, !sortDescending.Value);
 
+            var count =
+                (await
+                    cache
+                        .FT()
+                        .SearchAsync(
+                            DatabaseEx.GetIndexName<TD>(),
+                            query))
+                .TotalResults;
+
             if (page.HasValue && pageSize.HasValue)
                 query
                     .Limit(page.Value, pageSize.Value);
@@ -229,9 +238,7 @@ namespace White.Knight.Redis
                     .ToJson()
                     .Select(o => JsonSerializer.Deserialize<TD>(o))
                     .AsQueryable(),
-                result
-                    .Documents
-                    .Count
+                count
             );
         }
 
