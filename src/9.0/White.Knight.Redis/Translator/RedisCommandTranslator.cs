@@ -97,6 +97,7 @@ namespace White.Knight.Redis.Translator
                 SpecificationByEquals<TD, Guid> eq => $"@{GetPropertyExpressionName(ref name, eq.Property.Body)}:{{{EscapeGuidValue(eq.Value.ToString())}}}",
                 SpecificationByAnd<TD> and => $" {Translate(and.Left)} {Translate(and.Right)} ",
                 SpecificationByOr<TD> => throw new UnparsableSpecificationException(),
+                SpecificationByNot<TD> => throw new UnparsableSpecificationException(),
                 SpecificationByTextStartsWith<TD> text => $"@{GetPropertyExpressionName(ref name, text.Property.Body)}:{text.Value}*",
                 SpecificationByTextEndsWith<TD> text => $"@{GetPropertyExpressionName(ref name, text.Property.Body)}:*{text.Value}",
                 SpecificationByTextContains<TD> text => $"@{GetPropertyExpressionName(ref name, text.Property.Body)}:*{text.Value}*",

@@ -8,6 +8,7 @@ namespace White.Knight.Redis.Options
     public class RedisRepositoryFeatures<TD>(
         IRedisCache<TD> redisCache,
         ICommandTranslator<TD, RedisTranslationResult> commandTranslator,
+        IClientSideEvaluationHandler clientSideEvaluationHandler,
         IRepositoryExceptionRethrower exceptionRethrower = null,
         ILoggerFactory loggerFactory = null)
         : IRedisRepositoryFeatures<TD> where TD : new()
@@ -15,6 +16,8 @@ namespace White.Knight.Redis.Options
         public IRedisCache<TD> RedisCache { get; set; } = redisCache;
 
         public ICommandTranslator<TD, RedisTranslationResult> CommandTranslator { get; set; } = commandTranslator;
+
+        public IClientSideEvaluationHandler ClientSideEvaluationHandler { get; set; } = clientSideEvaluationHandler;
 
         public IRepositoryExceptionRethrower ExceptionRethrower { get; set; } = exceptionRethrower;
 

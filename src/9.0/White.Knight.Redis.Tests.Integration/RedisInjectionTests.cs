@@ -1,10 +1,13 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using White.Knight.Domain.Enum;
 using White.Knight.Injection.Abstractions;
 using White.Knight.Redis.Injection;
 using White.Knight.Redis.Options;
 using White.Knight.Redis.Tests.Integration.Repositories;
 using White.Knight.Tests.Abstractions;
+using White.Knight.Tests.Abstractions.Extensions;
 using White.Knight.Tests.Abstractions.Injection;
 using White.Knight.Tests.Abstractions.Tests;
 using White.Knight.Tests.Domain;
@@ -26,8 +29,15 @@ namespace White.Knight.Redis.Tests.Integration
                     .AddAttributedRedisRepositories(RepositoryAssembly);
 
                 ServiceCollection
-                    .AddRepositoryFeatures()
+                    .AddRepositoryFeatures<RedisRepositoryConfigurationOptions>(Configuration)
                     .AddRedisRepositoryFeatures();
+            }
+
+            public override void ArrangeDefinedClientSideConfiguration()
+            {
+                Configuration =
+                    Configuration
+                        .ArrangeThrowOnClientSideEvaluation<RedisRepositoryConfigurationOptions>();
             }
 
             public override void AssertLoggerFactoryResolved()
@@ -45,6 +55,28 @@ namespace White.Knight.Redis.Tests.Integration
 
                 Assert
                     .NotNull(loggerFactory);
+            }
+
+            public override void AssertRepositoryOptionsResolvedWithDefault()
+            {
+                var options =
+                    Sut
+                        .GetRequiredService<IOptions<RedisRepositoryConfigurationOptions>>();
+
+                Assert.NotNull(options.Value);
+
+                Assert.Equal(ClientSideEvaluationResponseTypeEnum.Warn, options.Value.ClientSideEvaluationResponse);
+            }
+
+            public override void AssertRepositoryOptionsResolvedWithDefined()
+            {
+                var options =
+                    Sut
+                        .GetRequiredService<IOptions<RedisRepositoryConfigurationOptions>>();
+
+                Assert.NotNull(options.Value);
+
+                Assert.Equal(ClientSideEvaluationResponseTypeEnum.Throw, options.Value.ClientSideEvaluationResponse);
             }
         }
     }
