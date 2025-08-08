@@ -20,7 +20,7 @@ namespace White.Knight.Redis.Tests.Integration
                     Wait
                         .ForUnixContainer()
                         .UntilPortIsAvailable(6379)
-                        .UntilMessageIsLogged("Ready to accept connections")
+                       // .UntilMessageIsLogged("Ready to accept connections")
                 );
         }
 
