@@ -9,21 +9,6 @@ namespace White.Knight.Redis.Tests.Integration
     {
         private RedisContainer _redisContainer;
 
-        private static RedisBuilder GetRedisBuilder(int hostedPort)
-        {
-            return
-                new RedisBuilder()
-                    .WithImage("redis/redis-stack:latest")
-                    .WithName($"redis-test-harness-{Guid.NewGuid()}")
-                    .WithPortBinding(hostedPort, 6379);
-            // .WithWaitStrategy(
-            //     Wait
-            //         .ForUnixContainer()
-            //         .UntilPortIsAvailable(6379)
-            //        // .UntilMessageIsLogged("Ready to accept connections")
-            // );
-        }
-
         public async Task StartAsync(int hostedPort)
         {
             _redisContainer =
@@ -49,6 +34,21 @@ namespace White.Knight.Redis.Tests.Integration
 
                 _redisContainer = null;
             }
+        }
+
+        private static RedisBuilder GetRedisBuilder(int hostedPort)
+        {
+            return
+                new RedisBuilder()
+                    .WithImage("redis/redis-stack:latest")
+                    .WithName($"redis-test-harness-{Guid.NewGuid()}")
+                    .WithPortBinding(hostedPort, 6379)
+                    .WithWaitStrategy(
+                        Wait
+                            .ForUnixContainer()
+                            .UntilPortIsAvailable(6379)
+                            .UntilMessageIsLogged("Ready to accept connections")
+                    );
         }
     }
 }
