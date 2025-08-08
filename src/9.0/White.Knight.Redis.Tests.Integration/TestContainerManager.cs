@@ -15,13 +15,13 @@ namespace White.Knight.Redis.Tests.Integration
                 new RedisBuilder()
                     .WithImage("redis/redis-stack:latest")
                     .WithName($"redis-test-harness-{Guid.NewGuid()}")
-                    .WithPortBinding(hostedPort, 6379)
-                .WithWaitStrategy(
-                    Wait
-                        .ForUnixContainer()
-                        .UntilPortIsAvailable(6379)
-                       // .UntilMessageIsLogged("Ready to accept connections")
-                );
+                    .WithPortBinding(hostedPort, 6379);
+            // .WithWaitStrategy(
+            //     Wait
+            //         .ForUnixContainer()
+            //         .UntilPortIsAvailable(6379)
+            //        // .UntilMessageIsLogged("Ready to accept connections")
+            // );
         }
 
         public async Task StartAsync(int hostedPort)
