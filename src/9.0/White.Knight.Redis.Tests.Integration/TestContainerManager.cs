@@ -5,14 +5,14 @@ using Testcontainers.Redis;
 
 namespace White.Knight.Redis.Tests.Integration
 {
-    public class TestContainerManager : ITestContainerManager
+    public class TestContainerManager
     {
         private RedisContainer _redisContainer;
 
         public async Task StartAsync(int hostedPort)
         {
             _redisContainer =
-                GetRedisBuilder(hostedPort)
+                GetBuilder(hostedPort)
                     .Build();
 
             await
@@ -36,7 +36,7 @@ namespace White.Knight.Redis.Tests.Integration
             }
         }
 
-        private static RedisBuilder GetRedisBuilder(int hostedPort)
+        private static RedisBuilder GetBuilder(int hostedPort)
         {
             return
                 new RedisBuilder()
